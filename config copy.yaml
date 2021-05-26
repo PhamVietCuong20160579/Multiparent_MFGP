@@ -1,0 +1,8 @@
+repeat: 1
+pop_size: 50
+num_iter: 5000
+sbxdi: 10
+pmdi: 10
+pswap: 0.5
+dimension: 50
+rmp: 0.3

@@ -1,0 +1,4 @@
+from custom_gym.envs.cartpole_half_gravity import CartPoleHalfEnv
+from custom_gym.envs.cartpole_quarter_gravity import CartPoleQuarterEnv
+
+from custom_gym.envs.cartpole_swing_up_discret import CartPoleSwingUpEnv

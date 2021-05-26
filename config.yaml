@@ -1,0 +1,32 @@
+repeat: 1
+sbxdi: 10
+pmdi: 10
+pswap: 0.5
+dimension: 50
+rmp: 0.2
+mutation_rate: 0.05
+
+# for gym
+pop_size: 10
+num_iter: 100
+
+# for normal
+# pop_size: 50
+# num_iter: 5000
+
+num_par: 3
+
+# enviroment_name
+names:
+  - CartPole-v1
+  # - custom_gym:cartpole-swing-up-v0
+  - custom_gym:cartpole-half-gravity-v0
+
+# for SL-GEP
+max_arity: 2
+h_main: 10
+h_adf: 3
+
+num_terminal: 4
+num_main: 2
+num_adf: 4
