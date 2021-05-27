@@ -100,20 +100,15 @@ class Chromosome():
             return R2, R3
 
     # rescale from result of crossover_mul to feasible_range
-    def _gene_rescale(self, i, b):
+    def _gene_rescale(self, i, old_low, old_high):
         new_min, new_max = self._get_feasible_range(i)
-        old_min = np.floor(new_min + b*(new_min-new_max))
-        old_max = np.ceil(new_max + b*(new_max-new_min))
+        L = np.floor(old_low)
+        H = np.ceil(old_high)
         new_range = new_max - new_min
-        old_range = old_max - old_min
+        old_range = H - L
 
         vp = self.gene[i]
-        if vp < old_min:
-            print(vp)
-            print(old_min)
-            print('old range not correct')
-            exit()
-        re = (((vp - old_min) * new_range) / old_range) + new_min
+        re = (((vp - L) * new_range) / old_range) + new_min
         return re
 
     def generate_gene(self):
@@ -173,10 +168,12 @@ class Chromosome():
                     self.calculate_node(adf, parameter)
                     node.set_value(adf.value)
         except Exception as e:
+            print('calculate node error')
             print(e)
             print(terminal_list)
             print(node.index)
             print(self.chromosome_range)
+            exit()
 
     def get_action(self, terminal_list):
         # everytime get_action is call, it re-prase a tree based on its gene
@@ -285,12 +282,6 @@ class Slgep_pop():
         con_genes = np.array([p.gene for p in con_pops])
         mean = np.mean(con_genes, axis=0)
         std = np.std(con_genes, axis=0)
-        for i in range(len(mean)):
-            if mean[i] < 1:
-                print(i)
-                print(mean[i])
-                print(std[i])
-                print(con_genes[:, i])
         return Model(mean, std, num_sample, con_genes)
 
     def learn_rmp(self, subpops):
@@ -338,8 +329,41 @@ class Slgep_pop():
                 cl[j].gene[i] = pl[j].gene[i] + bl[j][i] * \
                     (pl[(j+1) % no_par].gene[i] - pl[(j+2) % no_par].gene[i])
 
-                cl[j].gene[i] = cl[j]._gene_rescale(i, bl[j][i])
+                L, H = cl[j]._get_feasible_range(i)
 
+                old_low = (L + bl[j][i]*(L - H))
+
+                old_high = (H + bl[j][i]*(H - L))
+
+                cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
+
+        return cl
+
+    def crossover_mul_second(self, pl, bl, rmp_matrix):
+        no_par = len(pl)
+        cl = deepcopy(pl)
+        rmp = np.ones((no_par, no_par))
+        for i in range(no_par-1):
+            for j in range(i, no_par):
+                if pl[i].sf == pl[j].sf:
+                    rmp[i][j] *= 1
+                else:
+                    rmp[i][j] *= rmp_matrix[pl[i].sf, pl[j].sf]
+
+        for j in range(no_par):
+            for i in range(pl[j].D):
+                L, H = cl[j]._get_feasible_range(i)
+                cl[j].gene[i] = (pl[j].gene[i] + bl[j, i] *
+                                 (rmp[j][(j+1) % no_par] * pl[(j+1) % no_par].gene[i] -
+                                  rmp[j][(j+2) % no_par] * pl[(j+2) % no_par].gene[i]))
+
+                old_low = (L + bl[j][i]*(rmp[j][(j+1) % no_par]
+                           * L - rmp[j][(j+2) % no_par] * H))
+
+                old_high = (H + bl[j][i]*(rmp[j][(j+1) %
+                            no_par] * H - rmp[j][(j+2) % no_par] * L))
+
+                cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
         return cl
 
     def _calculate_mr(self, p, scaling_factor):
@@ -463,21 +487,25 @@ class Model:
             # this is kind of questionable
             # actually safer to just use constant rmp
             if self.std[d] == 0:
-                self.std[d] = 1
-            try:
-                prob *= norm.pdf(subgene[:, d],
-                                 loc=self.mean[d], scale=self.std[d])
-                for j in range(N):
-                    if prob[j] < 1e-50:
-                        prob[j] = 1e-50
-            except Exception as e:
-                print(e)
-                print(subgene[:, d])
-                print(self.mean[d])
-                print(self.std[d])
-                print(prob)
-                print(self.sample[:, d])
-                exit()
+                prob *= np.ones([N])
+            else:
+                try:
+                    # prob *= norm.pdf(subgene[:, d],
+                    #                  loc=self.mean[d], scale=self.std[d])
+                    for j in range(N):
+                        prob[j] *= norm.pdf(subpop[j].gene[d],
+                                            loc=self.mean[d], scale=self.std[d])
+                        if prob[j] < 1e-50:
+                            prob[j] = 1e-50
+                except Exception as e:
+                    print('calculate density error')
+                    print(e)
+                    print(subgene[:, d])
+                    print(self.mean[d])
+                    print(self.std[d])
+                    print(prob)
+                    print(self.sample[:, d])
+                    exit()
         return prob
 
 

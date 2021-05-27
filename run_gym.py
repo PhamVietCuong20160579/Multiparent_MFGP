@@ -26,7 +26,7 @@ def main():
         # mfeaii(envs, config, callback)
 
         print('[+] MFEAII_MULTIPARENT - %d/%d' % (exp_id, config['repeat']))
-        mfeaii_mgp(envs, config, callback, normal_beta=False, const_rmp=True)
+        mfeaii_mgp_2(envs, config, callback, normal_beta=False)
 
         # print('[+] MFEAII_MULTIPARENT (beta calculated from distribution model) - %d/%d' %
         #       (exp_id, config['repeat']))
