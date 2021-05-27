@@ -24,8 +24,8 @@ def mfeaii(envs, config, callback=None):
     # initialize
     population = Slgep_pop(no_adf, no_terminal, no_main,
                            h_main, max_arity, h_adf, no_pop=2*N, no_task=K)
-    # evaluate
-    population.evaluate(envs)
+    # dimention size
+    D = population.pop[0].D
 
     # evaluate
     population.evaluate(envs)

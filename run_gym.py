@@ -18,15 +18,15 @@ def main():
         saver = Saver(config, instance, exp_id)
         callback = saver.append
 
-        print('[+] EA - %d/%d' % (exp_id, config['repeat']))
-        cea(envs, config, callback)
+        # print('[+] EA - %d/%d' % (exp_id, config['repeat']))
+        # cea(envs, config, callback)
         # print('[+] MFEA - %d/%d' % (exp_id, config['repeat']))
         # mfea(envs, config, callback)
         # print('[+] MFEAII - %d/%d' % (exp_id, config['repeat']))
         # mfeaii(envs, config, callback)
 
-        # print('[+] MFEAII_MULTIPARENT - %d/%d' % (exp_id, config['repeat']))
-        # mfeaii_mgp(envs, config, callback, normal_beta=False, const_rmp=True)
+        print('[+] MFEAII_MULTIPARENT - %d/%d' % (exp_id, config['repeat']))
+        mfeaii_mgp(envs, config, callback, normal_beta=False, const_rmp=True)
 
         # print('[+] MFEAII_MULTIPARENT (beta calculated from distribution model) - %d/%d' %
         #       (exp_id, config['repeat']))

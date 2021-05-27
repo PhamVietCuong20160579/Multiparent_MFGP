@@ -2,8 +2,12 @@
 from mtsoo import *
 from slgep_lib.chromosome import *
 
+from scipy.stats import norm
 
-def mfeaii_mgp(envs, config, callback=None, normal_beta=False, const_rmp=True):
+# Problem, stuck in local optimum
+
+
+def mfeaii_mgp(envs, config, callback=None, normal_beta=True, const_rmp=True):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
@@ -13,20 +17,22 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=False, const_rmp=True):
     rmp_matrix = np.zeros([K, K])
     mr = config['mutation_rate']
 
-    pmdi = config['pmdi']
-    pswap = config['pswap']
-
     # for sl_gep decode
     max_arity = config['max_arity']
     h_main = config['h_main']
     h_adf = config['h_adf']
-    no_terminal = config['num_terminal']
-    no_main = config['num_main']
-    no_adf = config['num_adf']
+    no_main = envs.envs[0].action_space.n
+    no_adf = no_main*2
+    no_terminal = np.max([envs.envs[i].reset().shape[0] for i in range(K)])
+    print(no_terminal)
+    # no_terminal = config['num_terminal']
+    # no_main = config['num_main']
+    # no_adf = config['num_adf']
 
     # initialize
     population = Slgep_pop(no_adf, no_terminal, no_main,
                            h_main, max_arity, h_adf, no_pop=2*N, no_task=K)
+
     # dimention size
     D = population.pop[0].D
 
@@ -44,8 +50,8 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=False, const_rmp=True):
         # population.permute()
 
         # learn rmp
+        subpops = population.get_subpops()
         if const_rmp == False:
-            subpops = population.get_subpops()
             rmp_matrix = population.learn_rmp(subpops)
 
         # select pair to crossover
@@ -57,15 +63,21 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=False, const_rmp=True):
 
             # set beta
             if normal_beta:
-                # calculating beta equal posibilistic distribution.
+                # calculating beta from normal distribution.
+                bl = np.random.normal(0.7, 0.1, size=(no_p, D))
+            else:
+                # calculating beta from posibilistic distribution.
                 bl = np.ones((no_p, D))
                 for i in range(0, no_p):
                     sf = population.pop[k+i].sf
-                    bl[i] *= population._learn_model(
-                        subpops[sf], D).density(subpops[sf])
-            else:
-                # alternative beta
-                bl = np.random.normal(0.7, 0.1, size=(no_p, D))
+                    cgene = np.array([p.gene for p in subpops[sf]])
+                    mean = np.mean(cgene, axis=0)
+                    std = np.std(cgene, axis=0)
+                    for j in range(D):
+                        if std[j] == 0:
+                            std[j] = 1
+                        bl[i][j] *= norm.pdf(
+                            parents[i].gene[j], loc=mean[j], scale=std[j])
 
             # set rmp
             if const_rmp == False:

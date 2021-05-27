@@ -102,17 +102,18 @@ class Chromosome():
     # rescale from result of crossover_mul to feasible_range
     def _gene_rescale(self, i, b):
         new_min, new_max = self._get_feasible_range(i)
-        old_min = np.round(new_min + b*(new_min-new_max))
-        old_max = np.round(new_max + b*(new_max-new_min))
+        old_min = np.floor(new_min + b*(new_min-new_max))
+        old_max = np.ceil(new_max + b*(new_max-new_min))
         new_range = new_max - new_min
         old_range = old_max - old_min
 
-        vp = np.round(self.gene[i])
-
-        if vp < new_max and vp >= new_min:
-            re = vp
-        else:
-            re = (((vp - old_min) * new_range) / old_range) + new_min
+        vp = self.gene[i]
+        if vp < old_min:
+            print(vp)
+            print(old_min)
+            print('old range not correct')
+            exit()
+        re = (((vp - old_min) * new_range) / old_range) + new_min
         return re
 
     def generate_gene(self):
@@ -127,7 +128,6 @@ class Chromosome():
         symbol_list = self.function_set + self.adf_set + \
             self.adf_terminal_set + self.terminal_set
 
-        R1, R2, R3, R4 = self.chromosome_range
         g = self.gene[start:stop].copy().tolist()
 
         # create Root node
@@ -135,12 +135,10 @@ class Chromosome():
 
         queue = [root]
         g.pop(0)
-
         while len(queue) and len(g):
             parent = queue.pop(0)
-
             for i in range(parent.arity):
-                node = Node(index=g[0], func=symbol_list[g[0]], parent=None)
+                node = Node(index=g[0], func=symbol_list[g[0]], parent=parent)
 
                 queue.append(node)
                 g.pop(0)
@@ -150,30 +148,35 @@ class Chromosome():
 
     def calculate_node(self, node: Node, terminal_list):
         R1, R2, R3, R4 = self.chromosome_range
-
-        # if node is in terminal set (input set)
-        if node.index >= R3:
-            node.set_value(terminal_list[node.index - R3])
-        # if node is in adf terminal set
-        elif node.index >= R2:
-            node.set_value(terminal_list[node.index - R2])
-        # if node is ether function or adf symbol
-        else:
-            # need to calculate children of node as parameter to calculate node
-
-            parameter = []
-            for child in node.children:
-                self.calculate_node(child, terminal_list)
-                parameter.append(child.value)
-            # if node is function symbol
-            if node.index < R1:
-                value = node.func(*parameter)
-                node.set_value(value)
-            # if node is adf function
+        try:
+            # if node is in terminal set (input set)
+            if node.index >= R3:
+                node.set_value(terminal_list[node.index - R3])
+            # if node is in adf terminal set
+            elif node.index >= R2:
+                node.set_value(terminal_list[node.index - R2])
+            # if node is ether function or adf symbol
             else:
-                adf = self.adfs[node.index-R1]
-                self.calculate_node(adf, parameter)
-                node.set_value(adf.value)
+                # need to calculate children of node as parameter to calculate node
+
+                parameter = []
+                for child in node.children:
+                    self.calculate_node(child, terminal_list)
+                    parameter.append(child.value)
+                # if node is function symbol
+                if node.index < R1:
+                    value = node.func(*parameter)
+                    node.set_value(value)
+                # if node is adf function
+                else:
+                    adf = self.adfs[node.index-R1]
+                    self.calculate_node(adf, parameter)
+                    node.set_value(adf.value)
+        except Exception as e:
+            print(e)
+            print(terminal_list)
+            print(node.index)
+            print(self.chromosome_range)
 
     def get_action(self, terminal_list):
         # everytime get_action is call, it re-prase a tree based on its gene
@@ -190,7 +193,6 @@ class Chromosome():
         # self generate main tree
         self.mains = [self.generate_tree(
             main, main + self.main_length) for main in main_index]
-
         # self generate adf tree
         self.adfs = [self.generate_tree(
             adf, adf + self.adf_length) for adf in adf_index]
@@ -280,10 +282,16 @@ class Slgep_pop():
         # rand_pop = np.random.rand(num_random_sample, D)
         rand_pop = self.initialize(num_random_sample, self.no_task)
         con_pops = rand_pop + subpop
-        con_genes = [p.gene for p in con_pops]
+        con_genes = np.array([p.gene for p in con_pops])
         mean = np.mean(con_genes, axis=0)
         std = np.std(con_genes, axis=0)
-        return Model(mean, std, num_sample)
+        for i in range(len(mean)):
+            if mean[i] < 1:
+                print(i)
+                print(mean[i])
+                print(std[i])
+                print(con_genes[:, i])
+        return Model(mean, std, num_sample, con_genes)
 
     def learn_rmp(self, subpops):
         K = self.no_task
@@ -425,7 +433,7 @@ class Slgep_pop():
             return x, fun
         # if there is no task that has sf of t, assign randomly some task to t
         else:
-            print('no individual have this sf {}'.format(t))
+            # print('no individual have this sf {}'.format(t))
             switch_sf = np.random.choice(self.pop, int(len(self.pop)/2))
             for p in switch_sf:
                 p.sf = t
@@ -436,10 +444,11 @@ class Slgep_pop():
 # copy and modified from mstoo lib
 
 class Model:
-    def __init__(self, mean, std, num_sample):
+    def __init__(self, mean, std, num_sample, sample):
         self.mean = mean
         self.std = std
         self.num_sample = num_sample
+        self.sample = sample
 
     def density(self, subpop):
         D = subpop[0].D
@@ -448,8 +457,8 @@ class Model:
         subgene = np.array([p.gene for p in subpop])
         for d in range(D):
             # actually, the prob can get really low beaucause the number are integer randomed in very small area. (like [10-16])
-            # and so does means and std.
-            # therefore calculating can get so minor its does not important anymore
+            # and so does std.
+            # therefore calculating can get so minor that its cause multiply underflow or exp underflow when take np.exp(x**2/2)
 
             # this is kind of questionable
             # actually safer to just use constant rmp
@@ -462,11 +471,12 @@ class Model:
                     if prob[j] < 1e-50:
                         prob[j] = 1e-50
             except Exception as e:
+                print(e)
                 print(subgene[:, d])
                 print(self.mean[d])
                 print(self.std[d])
                 print(prob)
-                print(e)
+                print(self.sample[:, d])
                 exit()
         return prob
 
