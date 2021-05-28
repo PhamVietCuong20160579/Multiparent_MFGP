@@ -1,5 +1,5 @@
 from mtsoo import *
-from slgep_lib.SL_gep import *
+from slgep_lib.chromosome_continuous import *
 
 
 def cea(envs, config, callback=None):
@@ -50,7 +50,6 @@ def cea(envs, config, callback=None):
             c1, c2 = population.onepoint_crossover(p1, p2)
             c1 = population.mutate(c1, mr)
             c2 = population.mutate(c2, mr)
-            # c1, c2 = variable_swap(c1, c2, pswap)
             # save child
             c1.sf = sf1
             c2.sf = sf1

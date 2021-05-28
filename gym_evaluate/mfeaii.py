@@ -1,5 +1,5 @@
 from mtsoo import *
-from slgep_lib.SL_gep import *
+from slgep_lib.chromosome_continuous import *
 
 
 def mfeaii(envs, config, callback=None):
@@ -51,8 +51,8 @@ def mfeaii(envs, config, callback=None):
             # crossover
             if sf1 == sf2:
                 c1, c2 = population.onepoint_crossover(p1, p2)
-                c1 = population.frequency_based_mutate(c1, mr)
-                c2 = population.frequency_based_mutate(c2, mr)
+                c1 = population.pdf_based_mutation(c1, mr)
+                c2 = population.pdf_based_mutation(c2, mr)
                 # c1, c2 = variable_swap(c1, c2, pswap)
                 c1.sf = sf1
                 c2.sf = sf1
@@ -73,8 +73,8 @@ def mfeaii(envs, config, callback=None):
                 p2 = population.find_relative(sf1)
 
                 c1, c2 = population.onepoint_crossover(p1, p2)
-                c1 = population.frequency_based_mutate(c1, mr)
-                c2 = population.frequency_based_mutate(c2, mr)
+                c1 = population.pdf_based_mutation(c1, mr)
+                c2 = population.pdf_based_mutation(c2, mr)
                 # c1, c2 = variable_swap(c1, c2, pswap)
                 c1.sf = sf1
                 c2.sf = sf1
