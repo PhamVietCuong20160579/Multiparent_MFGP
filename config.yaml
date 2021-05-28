@@ -4,7 +4,7 @@ pmdi: 10
 pswap: 0.5
 dimension: 50
 rmp: 0.2
-mutation_rate: 0.05
+mutation_rate: 0.1
 
 # for gym
 pop_size: 10

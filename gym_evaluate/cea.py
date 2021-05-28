@@ -1,5 +1,5 @@
 from mtsoo import *
-from slgep_lib.chromosome import *
+from slgep_lib.SL_gep import *
 
 
 def cea(envs, config, callback=None):

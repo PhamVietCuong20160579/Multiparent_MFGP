@@ -1,6 +1,6 @@
 # from kay.mtsoo import *
 from mtsoo import *
-from slgep_lib.chromosome import *
+from slgep_lib.SL_gep import *
 
 from scipy.stats import norm
 
@@ -15,7 +15,7 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=True, const_rmp=True):
     no_par = config['num_par']                # number of parents
     rmp = config['rmp']                # use constant rmp
     rmp_matrix = np.zeros([K, K])
-    # mr = config['mutation_rate']
+    mr = config['mutation_rate']
 
     # for sl_gep decode
     max_arity = config['max_arity']

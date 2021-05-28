@@ -2,7 +2,7 @@ dimension: 50
 h_adf: 3
 h_main: 10
 max_arity: 2
-mutation_rate: 0.05
+mutation_rate: 0.1
 names:
 - CartPole-v1
 - custom_gym:cartpole-half-gravity-v0

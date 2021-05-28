@@ -1,9 +1,8 @@
 # from kay.mtsoo import *
 from mtsoo import *
-from slgep_lib.chromosome import *
+from slgep_lib.SL_gep import *
 
 from scipy.stats import norm
-
 # Problem, stuck in local optimum
 
 
@@ -13,7 +12,6 @@ def mfeaii_mgp_2(envs, config, callback=None, normal_beta=True):
     N = config['pop_size'] * K         # population size
     T = config['num_iter']             # number of iteration
     no_par = config['num_par']                # number of parents
-    rmp = config['rmp']                # use constant rmp
     rmp_matrix = np.zeros([K, K])
     mr = config['mutation_rate']
 
@@ -91,8 +89,7 @@ def mfeaii_mgp_2(envs, config, callback=None, normal_beta=True):
             # if all chosen parents have same skill factor
             if same_sf:
                 if no_p > 2:
-                    cl = population.crossover_mul_second(
-                        parents, bl, rmp_matrix)
+                    cl = population.crossover_mul(parents, bl)
                     # mutate children
                     for i in range(no_p):
                         cl[i] = population.mutate(cl[i], mr)
@@ -140,8 +137,7 @@ def mfeaii_mgp_2(envs, config, callback=None, normal_beta=True):
                     parents[i] = population.find_relative(parents[0].sf)
 
                 if no_p > 2:
-                    cl = population.crossover_mul_second(
-                        parents, bl, rmp_matrix)
+                    cl = population.crossover_mul(parents, bl)
                     for i in range(no_p):
                         cl[i] = population.mutate(cl[i], mr)
                         cl[i].sf = parents[0].sf
