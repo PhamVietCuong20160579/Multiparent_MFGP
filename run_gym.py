@@ -20,8 +20,8 @@ def main():
 
         # print('[+] EA - %d/%d' % (exp_id, config['repeat']))
         # cea(envs, config, callback)
-        # print('[+] MFEA - %d/%d' % (exp_id, config['repeat']))
-        # mfea(envs, config, callback)
+        print('[+] MFEA - %d/%d' % (exp_id, config['repeat']))
+        mfea(envs, config, callback)
         print('[+] MFEAII - %d/%d' % (exp_id, config['repeat']))
         mfeaii(envs, config, callback)
 

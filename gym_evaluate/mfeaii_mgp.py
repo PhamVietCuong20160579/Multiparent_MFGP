@@ -89,69 +89,37 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=True):
                 if parents[i].sf != parents[i+1].sf:
                     same_sf = False
 
+            # what happen if no_p is equal to 2 or 1????
+
             # if all chosen parents have same skill factor
             if same_sf:
-                if no_p > 2:
-                    cl = population.crossover_mul(parents, bl)
-                    # mutate children
-                    for i in range(no_p):
-                        cl[i] = population.mutate(cl[i], mr)
-                        cl[i].sf = parents[0].sf
-                elif no_p == 2:
-                    c1, c2 = population.onepoint_crossover(
-                        parents[0], parents[1])
-                    c1 = population.frequency_based_mutate(c1, mr)
-                    c2 = population.frequency_based_mutate(c2, mr)
-                    # c1, c2 = variable_swap(c1, c2, pswap)
-                    c1.sf = parents[0].sf
-                    c2.sf = parents[0].sf
+                cl = population.crossover_mul(parents, bl)
+                # mutate children
+                for i in range(no_p):
+                    cl[i] = population.mutate(cl[i], mr, pmdi)
+                    cl[i].sf = parents[0].sf
                 else:
                     continue
 
             # if chosen parents have different skill factor,
             elif np.random.rand() < max_rmp:
-                if no_p > 2:
-                    cl = population.crossover_mul_second(
-                        parents, bl, rmp_matrix)
-                    for i in range(no_p):
-                        cl[i] = population.mutate(cl[i], mr)
+                cl = population.crossover_mul_second(
+                    parents, bl, rmp_matrix)
+                for i in range(no_p):
+                    cl[i] = population.mutate(cl[i], mr)
 
-                        # assign random skill factor from parents to child
-                        sf_assign = [p.sf for p in parents]
-                        cl[i].sf = np.random.choice(sf_assign)
-                else:
-                    c1, c2 = population.onepoint_crossover(
-                        parents[0], parents[1])
-                    c1 = population.mutate(c1, mr)
-                    c2 = population.mutate(c2, mr)
-                    # c1, c2 = variable_swap(c1, c2, pswap)
-                    if np.random.rand() < 0.5:
-                        c1.sf = parents[0].sf
-                    else:
-                        c1.sf = parents[1].sf
-                    if np.random.rand() < 0.5:
-                        c2.sf = parents[0].sf
-                    else:
-                        c2.sf = parents[1].sf
-
+                    # assign random skill factor from parents to child
+                    sf_assign = [p.sf for p in parents]
+                    cl[i].sf = np.random.choice(sf_assign)
             # else perform crossover on random individual with the same skill factor as p1
             else:
                 for i in range(1, no_p):
                     parents[i] = population.find_relative(parents[0].sf)
 
-                if no_p > 2:
-                    cl = population.crossover_mul(parents, bl)
-                    for i in range(no_p):
-                        cl[i] = population.mutate(cl[i], mr)
-                        cl[i].sf = parents[0].sf
-                else:
-                    c1, c2 = population.onepoint_crossover(
-                        parents[0], parents[1])
-                    c1 = population.frequency_based_mutate(c1, mr)
-                    c2 = population.frequency_based_mutate(c2, mr)
-                    # c1, c2 = variable_swap(c1, c2, pswap)
-                    c1.sf = parents[0].sf
-                    c2.sf = parents[0].sf
+                cl = population.crossover_mul(parents, bl)
+                for i in range(no_p):
+                    cl[i] = population.mutate(cl[i], mr)
+                    cl[i].sf = parents[0].sf
 
             # replace parents with children
             for i in range(no_p):

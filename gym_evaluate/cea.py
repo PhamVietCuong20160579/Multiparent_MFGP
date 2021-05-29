@@ -8,6 +8,9 @@ def cea(envs, config, callback=None):
     N = config['pop_size'] * K         # population size
     T = config['num_iter']             # number of iteration
     mr = config['mutation_rate']
+    sbxdi = config['sbxdi']
+    pmdi = config['pmdi']
+    pswap = config['pswap']
 
     # for sl_gep decode
     max_arity = config['max_arity']
@@ -15,11 +18,7 @@ def cea(envs, config, callback=None):
     h_adf = config['h_adf']
     no_main = envs.envs[0].action_space.n
     no_adf = no_main*2
-    # no_terminal = envs.envs[0].reset().shape[0]
     no_terminal = np.max([envs.envs[i].reset().shape[0] for i in range(K)])
-    # no_terminal = config['num_terminal']
-    # no_main = config['num_main']
-    # no_adf = config['num_adf']
 
     # initialize
     population = Slgep_pop(no_adf, no_terminal, no_main,
@@ -47,9 +46,10 @@ def cea(envs, config, callback=None):
             sf1 = p1.sf
             p2 = population.find_relative(sf1)
             # recombine parent
-            c1, c2 = population.onepoint_crossover(p1, p2)
-            c1 = population.mutate(c1, mr)
-            c2 = population.mutate(c2, mr)
+            c1, c2 = population.sbx_crossover(p1, p2, sbxdi)
+            c1 = population.mutate(c1, mr, pmdi)
+            c2 = population.mutate(c2, mr, pmdi)
+            c1, c2 = population.onepoint_crossover(c1, c2, pswap)
             # save child
             c1.sf = sf1
             c2.sf = sf1
@@ -60,9 +60,6 @@ def cea(envs, config, callback=None):
 
         # sort
         population.sort()
-
-        # c1 = population[np.where(skill_factor == 0)][0]
-        # c2 = population[np.where(skill_factor == 1)][0]
 
         # optimization info
         message = {'algorithm': 'cea'}

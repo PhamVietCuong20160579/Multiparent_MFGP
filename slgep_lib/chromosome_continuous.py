@@ -140,7 +140,7 @@ class Chromosome():
         g = np.ones(length)
         for i in range(length):
             low, high = self._get_feasible_range(start + i)
-            k = 0
+            k = 1
             while (k/(high-low)) < self.gene[start + i]:
                 k += 1
             g[i] *= (k+low-1)
@@ -179,14 +179,19 @@ class Chromosome():
         # if node is ether function or adf symbol
         else:
             # need to calculate children of node as parameter to calculate node
-
             parameter = []
             for child in node.children:
                 self.calculate_node(child, terminal_list)
                 parameter.append(child.value)
+
             # if node is function symbol
             if node.index < R1:
-                value = node.func(*parameter)
+                try:
+                    value = node.func(*parameter)
+                except Exception as e:
+                    print(e)
+                    print(node.index)
+                    print(node.name)
                 node.set_value(value)
             # if node is adf function
             else:
@@ -327,21 +332,39 @@ class Slgep_pop():
 
         return rmp_matrix
 
-    def onepoint_crossover(self, p1, p2):
+    # this only happen at pswap chance
+    def onepoint_crossover(self, p1, p2, pswap):
         D = p1.D
         x = np.random.randint(0, D)
         c1 = deepcopy(p1)
         c2 = deepcopy(p2)
-        if np.random.rand() < 0.5:
-            c1.gene[0: x] = p2.gene[0: x]
-            c2.gene[0: x] = p1.gene[0: x]
-        else:
-            c1.gene[x: D] = p2.gene[x: D]
-            c2.gene[x: D] = p1.gene[x: D]
+        if np.random.rand() < pswap:
+            if np.random.rand() < 0.5:
+                c1.gene[0: x] = p2.gene[0: x]
+                c2.gene[0: x] = p1.gene[0: x]
+            else:
+                c1.gene[x: D] = p2.gene[x: D]
+                c2.gene[x: D] = p1.gene[x: D]
+
         return c1, c2
 
-    def sbx_crossover(self, p1, p2):
-        pass
+    def sbx_crossover(self, p1, p2, sbxdi):
+        D = p1.D
+        cf = np.empty([D])
+        u = np.random.rand(D)
+
+        cf[u <= 0.5] = np.power((2 * u[u <= 0.5]), (1 / (sbxdi + 1)))
+        cf[u > 0.5] = np.power((2 * (1 - u[u > 0.5])), (-1 / (sbxdi + 1)))
+
+        c1 = deepcopy(p1)
+        c2 = deepcopy(p2)
+
+        c1.gene = 0.5 * ((1 + cf) * p1.gene + (1 - cf) * p2.gene)
+        c2.gene = 0.5 * ((1 + cf) * p2.gene + (1 - cf) * p1.gene)
+
+        c1.gene = np.clip(c1.gene, 0, 1)
+        c2.gene = np.clip(c2.gene, 0, 1)
+        return c1, c2
 
     def crossover_mul_second(self, pl, bl, rmp_matrix):
         no_par = len(pl)
@@ -398,30 +421,27 @@ class Slgep_pop():
         for i in range(p.D):
             if np.random.rand() < mr[i]:
                 # if the data is too focus, then take a random number from 0 to 1
-                if std[i] < 0.025:
-                    c.gene[i] = np.random.rand()
-                else:
-                    lower, upper = (0-mean[i])/std[i], (1-mean[i])/std[i]
-                    try:
-                        c.gene[i] = truncnorm.rvs(lower, upper,
-                                                  loc=mean[i], scale=std[i])
-                    except Exception as e:
-                        print('error in pdf_base_mutation')
-                        print(e)
-                        print(lower)
-                        print(upper)
-                        print(mean[i])
-                        print(std[i])
-                        exit()
+                c.gene[i] = np.random.normal(loc=mean[i], scale=std[i])
+                c.gene[i] = np.clip(c.gene[i], 0, 1)
         return c
 
-    def mutate(self, p, mutation_rate):
+    def mutate(self, p, mutation_rate, pmdi):
         c = deepcopy(p)
         mr = self._calculate_mr(p, mutation_rate)
+        # for i in range(p.D):
+        #     if np.random.rand() < mr[i]:
+        #         c.gene[i] = np.random.rand()
+        u = np.random.uniform(size=[p.D])
+
         for i in range(p.D):
             if np.random.rand() < mr[i]:
-                c.gene[i] = np.random.rand()
-
+                if u[i] < 0.5:
+                    delta = (2*u[i]) ** (1/(1+pmdi)) - 1
+                    c.gene[i] = p.gene[i] + delta * p.gene[i]
+                else:
+                    delta = 1 - (2 * (1 - u[i])) ** (1/(1+pmdi))
+                    c.gene[i] = p.gene[i] + delta * (1 - p.gene[i])
+        c.gene = np.clip(c.gene, 0, 1)
         return c
 
     def find_relative(self, sf):
@@ -429,7 +449,7 @@ class Slgep_pop():
         return np.random.choice(subpop)
 
     def evaluate_individual(self, p, envs):
-        agent = self.pop[p]
+        agent = p
         sf = agent.sf
         result = envs.run_env(sf, agent)
         return result
