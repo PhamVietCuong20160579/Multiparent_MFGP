@@ -6,7 +6,7 @@ from scipy.stats import norm
 # Problem, stuck in local optimum
 
 
-def mfeaii_mgp(envs, config, callback=None, normal_beta=True):
+def mfeaii_mgp(envs, config, callback=None):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
@@ -57,24 +57,19 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=True):
             # extract parents from population
             parents = [population.pop[k+i] for i in range(no_p)]
 
-            # set beta
-            if normal_beta:
-                # calculating beta from normal distribution.
-                bl = np.random.normal(0.7, 0.1, size=(no_p, D))
-            else:
-                # calculating beta from posibilistic distribution.
-                bl = np.ones((no_p, D))
-                for i in range(0, no_p):
-                    sf = parents[i].sf
-                    concatenate_gene = np.array([p.gene for p in subpops[sf]])
-                    mean = np.mean(concatenate_gene, axis=0)
-                    std = np.std(concatenate_gene, axis=0)
-                    for j in range(D):
-                        if std[j] == 0:
-                            bl[i][j] *= 1
-                        else:
-                            bl[i][j] *= norm.pdf(
-                                parents[i].gene[j], loc=mean[j], scale=std[j])
+            # calculating beta from posibilistic distribution.
+            bl = np.ones((no_p, D))
+            for i in range(0, no_p):
+                sf = parents[i].sf
+                concatenate_gene = np.array([p.gene for p in subpops[sf]])
+                mean = np.mean(concatenate_gene, axis=0)
+                std = np.std(concatenate_gene, axis=0)
+                for j in range(D):
+                    if std[j] == 0:
+                        bl[i][j] *= 1
+                    else:
+                        bl[i][j] *= norm.pdf(
+                            parents[i].gene[j], loc=mean[j], scale=std[j])
 
             # set rmp
             # calculate max rmp between the first parents and the rest
@@ -93,32 +88,60 @@ def mfeaii_mgp(envs, config, callback=None, normal_beta=True):
 
             # if all chosen parents have same skill factor
             if same_sf:
-                cl = population.crossover_mul(parents, bl)
+                cl = deepcopy(parents)
+                # crossover
+                # cl = population.crossover_multiparent(parents, bl)
+                for i in range(no_p-1):
+                    cl[i], cl[(i+1)] = population.sbx_crossover(
+                        parents[i], parents[(i+1)], sbxdi)
+
                 # mutate children
                 for i in range(no_p):
-                    cl[i] = population.mutate(cl[i], mr, pmdi)
+                    cl[i] = population.mutate(cl[i], pmdi)
+
+                for i in range(no_p-1):
+                    cl[i], cl[(i+1)] = population.variable_swap(
+                        cl[i], cl[(i+1)], pswap)
+
+                for i in range(no_p):
                     cl[i].sf = parents[0].sf
-                else:
-                    continue
 
             # if chosen parents have different skill factor,
             elif np.random.rand() < max_rmp:
-                cl = population.crossover_mul_second(
+                cl = population.innertask_crossover_multiparent(
                     parents, bl, rmp_matrix)
+                # ol = deepcopy(cl)
                 for i in range(no_p):
-                    cl[i] = population.mutate(cl[i], mr)
+                    cl[i] = population.mutate(cl[i], pmdi)
+                    # ol[i], ol[(i+1) % no_p] = population.variable_swap(
+                    #     cl[i], cl[(i+1) % no_p], pswap)
 
                     # assign random skill factor from parents to child
                     sf_assign = [p.sf for p in parents]
                     cl[i].sf = np.random.choice(sf_assign)
+
             # else perform crossover on random individual with the same skill factor as p1
             else:
                 for i in range(1, no_p):
                     parents[i] = population.find_relative(parents[0].sf)
 
-                cl = population.crossover_mul(parents, bl)
+                cl = deepcopy(parents)
+                # crossover
+
+                # cl = population.crossover_multiparent(parents, bl)
+                for i in range(no_p-1):
+                    cl[i], cl[(i+1)] = population.sbx_crossover(
+                        parents[i], parents[(i+1)], sbxdi)
+
+                # mutate children
                 for i in range(no_p):
-                    cl[i] = population.mutate(cl[i], mr)
+                    cl[i] = population.mutate(cl[i], pmdi)
+
+                for i in range(no_p-1):
+                    cl[i], cl[(i+1)] = population.variable_swap(
+                        cl[i], cl[(i+1)], pswap)
+
+                for i in range(no_p):
                     cl[i].sf = parents[0].sf
 
             # replace parents with children

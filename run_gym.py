@@ -20,17 +20,13 @@ def main():
 
         # print('[+] EA - %d/%d' % (exp_id, config['repeat']))
         # cea(envs, config, callback)
-        print('[+] MFEA - %d/%d' % (exp_id, config['repeat']))
-        mfea(envs, config, callback)
-        print('[+] MFEAII - %d/%d' % (exp_id, config['repeat']))
-        mfeaii(envs, config, callback)
+        # print('[+] MFEA - %d/%d' % (exp_id, config['repeat']))
+        # mfea(envs, config, callback)
+        # print('[+] MFEAII - %d/%d' % (exp_id, config['repeat']))
+        # mfeaii(envs, config, callback)
 
-        # print('[+] MFEAII_MULTIPARENT - %d/%d' % (exp_id, config['repeat']))
-        # mfeaii_mgp_2(envs, config, callback, normal_beta=False)
-
-        # print('[+] MFEAII_MULTIPARENT (beta calculated from distribution model) - %d/%d' %
-        #       (exp_id, config['repeat']))
-        # mfeaii_mgp(envs, config, callback, normal_beta=True, const_rmp=True)
+        print('[+] MFEAII_MULTIPARENT - %d/%d' % (exp_id, config['repeat']))
+        mfeaii_mgp(envs, config, callback)
 
         saver.save()
 

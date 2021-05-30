@@ -50,19 +50,22 @@ def mfea(envs, config, callback=None):
             # crossover
             if sf1 == sf2:
                 c1, c2 = population.sbx_crossover(p1, p2, sbxdi)
-                c1 = population.mutate(c1, mr, pmdi)
-                c2 = population.mutate(c2, mr, pmdi)
+                c1 = population.mutate(c1, pmdi)
+                c2 = population.mutate(c2, pmdi)
+                # c1 = population.pdf_based_mutation(c1, mr)
+                # c2 = population.pdf_based_mutation(c2, mr)
 
-                c1 = population.pdf_based_mutation(c1, pswap)
-                c2 = population.pdf_based_mutation(c2, pswap)
+                c1, c2 = population.variable_swap(c1, c2, pswap)
                 c1.sf = sf1
                 c2.sf = sf1
             elif sf1 != sf2 and np.random.rand() < rmp:
                 c1, c2 = population.sbx_crossover(p1, p2, sbxdi)
-                c1 = population.mutate(c1, mr, pmdi)
-                c2 = population.mutate(c2, mr, pmdi)
+                c1 = population.mutate(c1, pmdi)
+                c2 = population.mutate(c2, pmdi)
+                # c1 = population.mutate_random(c1, mr)
+                # c2 = population.mutate_random(c2, mr)
 
-                c1, c2 = population.onepoint_crossover(c1, c2, pswap)
+                # c1, c2 = population.variable_swap(c1, c2, pswap)
                 if np.random.rand() < 0.5:
                     c1.sf = sf1
                 else:
@@ -75,11 +78,12 @@ def mfea(envs, config, callback=None):
                 p2 = population.find_relative(sf1)
 
                 c1, c2 = population.sbx_crossover(p1, p2, sbxdi)
-                c1 = population.mutate(c1, mr, pmdi)
-                c2 = population.mutate(c2, mr, pmdi)
+                c1 = population.mutate(c1, pmdi)
+                c2 = population.mutate(c2, pmdi)
+                # c1 = population.pdf_based_mutation(c1, mr)
+                # c2 = population.pdf_based_mutation(c2, mr)
 
-                c1 = population.pdf_based_mutation(c1, pswap)
-                c2 = population.pdf_based_mutation(c2, pswap)
+                c1, c2 = population.variable_swap(c1, c2, pswap)
                 c1.sf = sf1
                 c2.sf = sf1
 

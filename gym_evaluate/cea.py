@@ -47,9 +47,9 @@ def cea(envs, config, callback=None):
             p2 = population.find_relative(sf1)
             # recombine parent
             c1, c2 = population.sbx_crossover(p1, p2, sbxdi)
-            c1 = population.mutate(c1, mr, pmdi)
-            c2 = population.mutate(c2, mr, pmdi)
-            c1, c2 = population.onepoint_crossover(c1, c2, pswap)
+            c1 = population.mutate(c1, pmdi)
+            c2 = population.mutate(c2, pmdi)
+            c1, c2 = population.variable_swap(c1, c2, pswap)
             # save child
             c1.sf = sf1
             c2.sf = sf1

@@ -28,25 +28,22 @@ class Node():
         self.value = value
 
     def _print_tree(self, root):
-        x = ''
         if root is not None:
             if len(root.children) == 2:
-                x += '('
-                x += self._print_tree(root.children[0])
-                x += self.name
-                x += self._print_tree(root.children[1])
-                x += ')'
+                self._print_tree(root.children[0])
+                print(self.name)
+                self._print_tree(root.children[1])
+                print(')')
             elif len(root.children) == 1:
-                x += '('
-                x += self.name
-                x += self._print_tree(root.children[0])
-                x += ')'
+                print('(')
+                print(self.name)
+                self._print_tree(root.children[0])
+                print(')')
             else:
-                x += self.name
-        return x
+                print(self.name)
 
     def print_tree(self):
-        return self._print_tree(self)
+        self._print_tree(self)
 
 
 # A single Chromosome (an individual of the enviroment)
@@ -332,19 +329,15 @@ class Slgep_pop():
 
         return rmp_matrix
 
-    # this only happen at pswap chance
-    def onepoint_crossover(self, p1, p2, pswap):
+    # from one-point crossover
+    def variable_swap(self, p1, p2, pswap):
         D = p1.D
         x = np.random.randint(0, D)
+        p_swap = np.random.rand(D) <= pswap
         c1 = deepcopy(p1)
         c2 = deepcopy(p2)
-        if np.random.rand() < pswap:
-            if np.random.rand() < 0.5:
-                c1.gene[0: x] = p2.gene[0: x]
-                c2.gene[0: x] = p1.gene[0: x]
-            else:
-                c1.gene[x: D] = p2.gene[x: D]
-                c2.gene[x: D] = p1.gene[x: D]
+        c1.gene[np.where(p_swap)] = p2.gene[np.where(p_swap)]
+        c2.gene[np.where(p_swap)] = p1.gene[np.where(p_swap)]
 
         return c1, c2
 
@@ -366,7 +359,25 @@ class Slgep_pop():
         c2.gene = np.clip(c2.gene, 0, 1)
         return c1, c2
 
-    def crossover_mul_second(self, pl, bl, rmp_matrix):
+    def crossover_multiparent(self, pl, bl):
+        no_par = len(pl)
+        cl = deepcopy(pl)
+
+        for j in range(no_par):
+            for i in range(pl[j].D):
+                # L, H = cl[j]._get_feasible_range(i)
+                L, H = 0, 1
+                cl[j].gene[i] = (pl[j].gene[i] + bl[j, i] * (
+                    pl[(j+1) % no_par].gene[i] - pl[(j+2) % no_par].gene[i]))
+
+                old_low = (L + bl[j][i]*(L - H))
+
+                old_high = (H + bl[j][i]*(H - L))
+
+                cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
+        return cl
+
+    def innertask_crossover_multiparent(self, pl, bl, rmp_matrix):
         no_par = len(pl)
         cl = deepcopy(pl)
         rmp = np.ones((no_par, no_par))
@@ -385,62 +396,56 @@ class Slgep_pop():
                                  (rmp[j][(j+1) % no_par] * pl[(j+1) % no_par].gene[i] -
                                   rmp[j][(j+2) % no_par] * pl[(j+2) % no_par].gene[i]))
 
-                old_low = (L + bl[j][i]*(rmp[j][(j+1) % no_par]
-                           * L - rmp[j][(j+2) % no_par] * H))
+                # old_low = (L + bl[j][i]*(rmp[j][(j+1) % no_par]
+                #            * L - rmp[j][(j+2) % no_par] * H))
 
-                old_high = (H + bl[j][i]*(rmp[j][(j+1) %
-                            no_par] * H - rmp[j][(j+2) % no_par] * L))
+                # old_high = (H + bl[j][i]*(rmp[j][(j+1) %
+                #             no_par] * H - rmp[j][(j+2) % no_par] * L))
 
-                cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
+                # cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
+            cl[j].gene = np.clip(cl[j].gene, 0, 1)
         return cl
 
-    def _calculate_mr(self, p, scaling_factor):
-        x = p
-        best, _ = self._get_best_individual_of_task(p.sf)
-        a, b = np.random.choice(self.pop, 2)
-
-        vp = np.ones(x.D)
-        vp[np.where(x.gene == best.gene)] = 0
-
-        th = np.ones(x.D)
-        th[np.where(a.gene == b.gene)] = 0
-
-        re = 1 - (1 - scaling_factor*vp)*(1 - scaling_factor*th)
-        return re
-
     # a pdf based mutation, inspired from the frequency based mutation
-    def pdf_based_mutation(self, p, mutation_rate):
+    def pdf_based_mutation(self, p, mr):
         sf = p.sf
-        mr = self._calculate_mr(p, mutation_rate)
         sub = self.get_subpops()[sf]
         con_genes = np.array([p.gene for p in sub])
         mean = np.mean(con_genes, axis=0)
         std = np.std(con_genes, axis=0)
+        L = (0-mean)/std
+        H = (1-mean)/std
         c = deepcopy(p)
 
         for i in range(p.D):
-            if np.random.rand() < mr[i]:
-                # if the data is too focus, then take a random number from 0 to 1
-                c.gene[i] = np.random.normal(loc=mean[i], scale=std[i])
-                c.gene[i] = np.clip(c.gene[i], 0, 1)
+            if np.random.rand() < mr:
+                try:
+                    c.gene[i] = truncnorm.rvs(
+                        L[i], H[i], loc=mean[i], scale=std[i])
+                except Exception as e:
+                    print(e)
+                    print(L[i])
+                    print(H[i])
+                    print(mean[i])
+                    print(std[i])
         return c
 
-    def mutate(self, p, mutation_rate, pmdi):
+    def mutate_random(self, p, mr):
         c = deepcopy(p)
-        mr = self._calculate_mr(p, mutation_rate)
-        # for i in range(p.D):
-        #     if np.random.rand() < mr[i]:
-        #         c.gene[i] = np.random.rand()
+        mutate_index = np.random.rand(p.D) <= mr
+        c.gene[np.where(mutate_index)] = np.random.rand()
+
+    def mutate(self, p, pmdi):
+        c = deepcopy(p)
         u = np.random.uniform(size=[p.D])
 
         for i in range(p.D):
-            if np.random.rand() < mr[i]:
-                if u[i] < 0.5:
-                    delta = (2*u[i]) ** (1/(1+pmdi)) - 1
-                    c.gene[i] = p.gene[i] + delta * p.gene[i]
-                else:
-                    delta = 1 - (2 * (1 - u[i])) ** (1/(1+pmdi))
-                    c.gene[i] = p.gene[i] + delta * (1 - p.gene[i])
+            if u[i] < 0.5:
+                delta = (2*u[i]) ** (1/(1+pmdi)) - 1
+                c.gene[i] = p.gene[i] + delta * p.gene[i]
+            else:
+                delta = 1 - (2 * (1 - u[i])) ** (1/(1+pmdi))
+                c.gene[i] = p.gene[i] + delta * (1 - p.gene[i])
         c.gene = np.clip(c.gene, 0, 1)
         return c
 
@@ -503,12 +508,9 @@ class Model:
         prob = np.ones([N])
         subgene = np.array([p.gene for p in subpop])
         for d in range(D):
-            # actually, the prob can get really low beaucause the number are integer randomed in very small area. (like [10-16])
-            # and so does std.
-            # therefore calculating can get so minor that its cause multiply underflow or exp underflow when take np.exp(x**2/2)
+            # when population converted to optimum, std get smaller, if in random process create a element that too far from mean,
+            # it will lead to error in np.exp(((x-mean)/std)**2/2)
 
-            # this is kind of questionable
-            # actually safer to just use constant rmp
             if self.std[d] == 0:
                 prob *= np.ones([N])
             else:
