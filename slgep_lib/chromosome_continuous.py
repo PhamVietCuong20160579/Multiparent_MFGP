@@ -370,11 +370,7 @@ class Slgep_pop():
                 cl[j].gene[i] = (pl[j].gene[i] + bl[j, i] * (
                     pl[(j+1) % no_par].gene[i] - pl[(j+2) % no_par].gene[i]))
 
-                old_low = (L + bl[j][i]*(L - H))
-
-                old_high = (H + bl[j][i]*(H - L))
-
-                cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
+            cl[j].gene = np.clip(cl[j].gene, 0, 1)
         return cl
 
     def innertask_crossover_multiparent(self, pl, bl, rmp_matrix):
@@ -390,23 +386,15 @@ class Slgep_pop():
 
         for j in range(no_par):
             for i in range(pl[j].D):
-                # L, H = cl[j]._get_feasible_range(i)
                 L, H = 0, 1
                 cl[j].gene[i] = (pl[j].gene[i] + bl[j, i] *
                                  (rmp[j][(j+1) % no_par] * pl[(j+1) % no_par].gene[i] -
                                   rmp[j][(j+2) % no_par] * pl[(j+2) % no_par].gene[i]))
 
-                # old_low = (L + bl[j][i]*(rmp[j][(j+1) % no_par]
-                #            * L - rmp[j][(j+2) % no_par] * H))
-
-                # old_high = (H + bl[j][i]*(rmp[j][(j+1) %
-                #             no_par] * H - rmp[j][(j+2) % no_par] * L))
-
-                # cl[j].gene[i] = cl[j]._gene_rescale(i, old_low, old_high)
             cl[j].gene = np.clip(cl[j].gene, 0, 1)
         return cl
 
-    # a pdf based mutation, inspired from the frequency based mutation
+    # a pdf based mutation, inspired from the frequency based mutation, unused
     def pdf_based_mutation(self, p, mr):
         sf = p.sf
         sub = self.get_subpops()[sf]

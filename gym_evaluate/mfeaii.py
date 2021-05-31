@@ -12,6 +12,7 @@ def mfeaii(envs, config, callback=None):
     sbxdi = config['sbxdi']
     pmdi = config['pmdi']
     pswap = config['pswap']
+    rmp_matrix = np.zeros([K, K])
 
     # for sl_gep decode
     max_arity = config['max_arity']
