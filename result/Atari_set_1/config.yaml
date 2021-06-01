@@ -4,13 +4,10 @@ h_main: 10
 max_arity: 2
 mutation_rate: 0.1
 names:
-- LongdpoleEnv-v0
-- LongdpoleEnv-v1
-num_adf: 4
+- SpaceInvaders-ram-v0
+- DemonAttack-ram-v0
 num_iter: 100
-num_main: 2
 num_par: 3
-num_terminal: 4
 pmdi: 10
 pop_size: 10
 pswap: 0.5

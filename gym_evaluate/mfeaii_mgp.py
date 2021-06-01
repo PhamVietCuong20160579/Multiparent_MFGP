@@ -13,7 +13,6 @@ def mfeaii_mgp(envs, config, callback=None):
     T = config['num_iter']             # number of iteration
     no_par = config['num_par']                # number of parents
     rmp_matrix = np.zeros([K, K])
-    mr = config['mutation_rate']
     sbxdi = config['sbxdi']
     pmdi = config['pmdi']
     pswap = config['pswap']
@@ -23,13 +22,18 @@ def mfeaii_mgp(envs, config, callback=None):
     max_arity = config['max_arity']
     h_main = config['h_main']
     h_adf = config['h_adf']
-    no_main = envs.envs[0].action_space.n
+    # no_main = config['no_main']
+    # no_adf = config['no_adf']
+    # no_terminal = config['no_terminal']
+    no_main = np.max([envs.envs[i].action_space.n for i in range(K)])
     no_adf = no_main*2
     no_terminal = np.max([envs.envs[i].reset().shape[0] for i in range(K)])
 
     # initialize
     population = Slgep_pop(no_adf, no_terminal, no_main,
                            h_main, max_arity, h_adf, no_pop=2*N, no_task=K)
+
+    result_list = []
 
     # dimention size
     D = population.pop[0].D
@@ -164,3 +168,6 @@ def mfeaii_mgp(envs, config, callback=None):
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)
         iterator.set_description(desc)
+        result_list.append(results)
+
+    return result_list

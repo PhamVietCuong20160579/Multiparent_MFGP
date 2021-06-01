@@ -5,6 +5,9 @@ from copy import deepcopy
 import numpy as np
 from collections import namedtuple
 
+from joblib import Parallel, delayed
+from os import cpu_count
+
 from .function_set import *
 
 ChromosomeRange = namedtuple('ChromosomeRange', ('R1', 'R2', 'R3', 'R4'))
@@ -223,7 +226,7 @@ class Chromosome():
             result.append(main.value)
         # result = softmax(result)
 
-        return np.argmax(result)
+        return result
 
 
 # The Slgep population, consist of multiple Chromosome
@@ -252,15 +255,44 @@ class Slgep_pop():
             pop.append(gene)
         return pop
 
+    # def evaluate(self, envs):
+    #     no_pop = len(self.pop)
+    #     fc = []
+    #     for i in range(no_pop):
+    #         agent = self.pop[i]
+    #         sf = agent.sf
+    #         result = envs.run_env(sf, agent)
+    #         agent.factorial_cost[sf] = result
+    #         fc.append(agent.factorial_cost)
+    #     # re-calculate s_fitness, based on current sf, not best sf, if best sf, need to re-assign sf
+    #     # s_fitness = 1 / np.min(np.argsort(np.argsort(fc, axis=0), axis=0) + 1, axis=1)
+    #     ranking = np.argsort(np.argsort(fc, axis=0), axis=0) + 1
+    #     b_sf = np.argmin(ranking, axis=1)
+    #     s_fitness = 1 / np.min(ranking, axis=1)
+
+    #     # re-assign sf to ones agent perform best
+    #     for i in range(no_pop):
+    #         self.pop[i].scalar_fitness = s_fitness[i]
+    #         self.pop[i].sf = b_sf[i]
+
     def evaluate(self, envs):
         no_pop = len(self.pop)
+        funcs = []
         fc = []
         for i in range(no_pop):
             agent = self.pop[i]
             sf = agent.sf
             result = envs.run_env(sf, agent)
+            funcs.append(delayed(envs.run_env)(sf, agent))
+
+        results = Parallel(n_jobs=cpu_count())(funcs)
+        for i in range(no_pop):
+            agent = self.pop[i]
+            sf = agent.sf
+            result = results[i]
             agent.factorial_cost[sf] = result
             fc.append(agent.factorial_cost)
+
         # re-calculate s_fitness, based on current sf, not best sf, if best sf, need to re-assign sf
         # s_fitness = 1 / np.min(np.argsort(np.argsort(fc, axis=0), axis=0) + 1, axis=1)
         ranking = np.argsort(np.argsort(fc, axis=0), axis=0) + 1
@@ -271,6 +303,12 @@ class Slgep_pop():
         for i in range(no_pop):
             self.pop[i].scalar_fitness = s_fitness[i]
             self.pop[i].sf = b_sf[i]
+
+    def evaluate_individual(self, p, envs):
+        agent = p
+        sf = agent.sf
+        result = envs.run_env(sf, agent)
+        return result
 
     def sort(self):
         self.pop.sort(key=lambda x: x.scalar_fitness, reverse=True)
@@ -440,12 +478,6 @@ class Slgep_pop():
     def find_relative(self, sf):
         subpop = [p for p in self.pop if p.sf == sf]
         return np.random.choice(subpop)
-
-    def evaluate_individual(self, p, envs):
-        agent = p
-        sf = agent.sf
-        result = envs.run_env(sf, agent)
-        return result
 
     def get_optimization_results(self, t, message):
         K = self.no_task

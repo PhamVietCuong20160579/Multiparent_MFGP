@@ -19,10 +19,14 @@ def mfea(envs, config, callback=None):
     max_arity = config['max_arity']
     h_main = config['h_main']
     h_adf = config['h_adf']
-    no_main = envs.envs[0].action_space.n
+    # no_main = config['no_main']
+    # no_adf = config['no_adf']
+    # no_terminal = config['no_terminal']
+    no_main = np.max([envs.envs[i].action_space.n for i in range(K)])
     no_adf = no_main*2
-    # no_terminal = envs.envs[0].reset().shape[0]
     no_terminal = np.max([envs.envs[i].reset().shape[0] for i in range(K)])
+
+    result_list = []
 
     # initialize
     population = Slgep_pop(no_adf, no_terminal, no_main,
@@ -105,3 +109,6 @@ def mfea(envs, config, callback=None):
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)
         iterator.set_description(desc)
+        result_list.append(results)
+
+    return result_list

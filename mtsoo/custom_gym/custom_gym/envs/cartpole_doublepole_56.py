@@ -63,10 +63,14 @@ class CartPoleHalfEnv(gym.Env):
         self.masscart = 1.0
         self.masspole = 0.1
         self.total_mass = (self.masspole + self.masscart)
-        self.length = 0.6  # actually half the pole's length
+        # length and mass of pole 1
+        # actually half the pole's length
+        self.length = 0.5
         self.polemass_length = (self.masspole * self.length)
-        self.length_2 = 0.5  # actually half the pole's length
-        self.polemass_length_2 = (self.masspole * self.length)
+        # length and mass of pole 2
+        self.length_2 = 0.7
+        self.polemass_length_2 = (self.masspole * self.length_2)
+
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
         self.kinematics_integrator = 'euler'
@@ -77,11 +81,20 @@ class CartPoleHalfEnv(gym.Env):
 
         # Angle limit set to 2 * theta_threshold_radians so failing observation
         # is still within bounds.
-        high = np.array([self.x_threshold * 2,
-                         np.finfo(np.float32).max,
-                         self.theta_threshold_radians * 2,
-                         np.finfo(np.float32).max],
-                        dtype=np.float32)
+        high = np.array([
+            # Cart position threshold
+            self.x_threshold * 2,
+            # Cart velocity threshold
+            np.finfo(np.float32).max,
+            # Poll 1 angle threshold
+            self.theta_threshold_radians * 2,
+            # Poll 1 Angular Velocity threshold
+            np.finfo(np.float32).max,
+            # Poll 2 angle threshold
+            self.theta_threshold_radians * 2,
+            # Poll 2 Angular Velocity threshold
+            np.finfo(np.float32).max,
+        ], dtype=np.float32)
 
         self.action_space = spaces.Discrete(2)
         self.observation_space = spaces.Box(-high, high, dtype=np.float32)
@@ -100,13 +113,17 @@ class CartPoleHalfEnv(gym.Env):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
 
-        x, x_dot, theta, theta_dot = self.state
+        x, x_dot, theta, theta_dot, theta_2, theta_2_dot = self.state
         force = self.force_mag if action == 1 else -self.force_mag
         costheta = math.cos(theta)
         sintheta = math.sin(theta)
 
+        costheta_2 = math.cos(theta_2)
+        sintheta_2 = math.sin(theta_2)
+
         # For the interested reader:
         # https://coneural.org/florian/papers/05_cart_pole.pdf
+
         temp = (force + self.polemass_length * theta_dot **
                 2 * sintheta) / self.total_mass
         thetaacc = (self.gravity * sintheta - costheta * temp) / (self.length *
@@ -124,13 +141,32 @@ class CartPoleHalfEnv(gym.Env):
             theta_dot = theta_dot + self.tau * thetaacc
             theta = theta + self.tau * theta_dot
 
-        self.state = (x, x_dot, theta, theta_dot)
+        temp = (force + self.polemass_length * theta_dot **
+                2 * sintheta) / self.total_mass
+        thetaacc = (self.gravity * sintheta - costheta * temp) / (self.length *
+                                                                  (4.0 / 3.0 - self.masspole * costheta ** 2 / self.total_mass))
+        xacc = temp - self.polemass_length * thetaacc * costheta / self.total_mass
+
+        if self.kinematics_integrator == 'euler':
+            x = x + self.tau * x_dot
+            x_dot = x_dot + self.tau * xacc
+            theta = theta + self.tau * theta_dot
+            theta_dot = theta_dot + self.tau * thetaacc
+        else:  # semi-implicit euler
+            x_dot = x_dot + self.tau * xacc
+            x = x + self.tau * x_dot
+            theta_dot = theta_dot + self.tau * thetaacc
+            theta = theta + self.tau * theta_dot
+
+        self.state = (x, x_dot, theta, theta_dot, theta_2, theta_2_dot)
 
         done = bool(
             x < -self.x_threshold
             or x > self.x_threshold
             or theta < -self.theta_threshold_radians
             or theta > self.theta_threshold_radians
+            or theta_2 < -self.theta_threshold_radians
+            or theta_2 > self.theta_threshold_radians
         )
 
         if not done:
