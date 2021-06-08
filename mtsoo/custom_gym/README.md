@@ -14,5 +14,3 @@ how to use: import with gym as normally, then call make with prefix "custom_gym:
         env = gym.make("custom_gym:cartpole-swing-up-v0")
 
 ## Note:
-
-currently, cartpole-swing-up-v0 require extra input, therefore the input is different from normal cartpole
