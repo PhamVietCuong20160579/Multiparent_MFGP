@@ -2,7 +2,7 @@ from mtsoo import *
 from slgep_lib.chromosome_continuous import *
 
 
-def cea(envs, config, callback=None):
+def cea(envs: GymTaskSet, config, callback=None):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
@@ -68,9 +68,10 @@ def cea(envs, config, callback=None):
 
         # optimization info
         message = {'algorithm': 'cea'}
+        algo = 'cea'
         results = population.get_optimization_results(t, message)
         if callback:
-            callback(results)
+            callback(results, algo)
 
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)

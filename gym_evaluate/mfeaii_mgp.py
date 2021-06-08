@@ -6,17 +6,17 @@ from scipy.stats import norm
 # Problem, stuck in local optimum
 
 
-def mfeaii_mgp(envs, config, callback=None):
+def mfeaii_mgp(envs: GymTaskSet, config, no_parent=3, callback=None):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
     T = config['num_iter']             # number of iteration
-    no_par = config['num_par']                # number of parents
+    # no_par = config['num_par']       # number of parents
+    no_par = no_parent                 # number of parents
     rmp_matrix = np.zeros([K, K])
     sbxdi = config['sbxdi']
     pmdi = config['pmdi']
     pswap = config['pswap']
-    rmp_matrix = np.zeros([K, K])
 
     # for sl_gep decode
     max_arity = config['max_arity']
@@ -63,18 +63,16 @@ def mfeaii_mgp(envs, config, callback=None):
             parents = [population.pop[k+i] for i in range(no_p)]
 
             # calculating beta from posibilistic distribution.
-            bl = np.ones((no_p, D))
-            for i in range(0, no_p):
-                sf = parents[i].sf
-                concatenate_gene = np.array([p.gene for p in subpops[sf]])
-                mean = np.mean(concatenate_gene, axis=0)
-                std = np.std(concatenate_gene, axis=0)
-                for j in range(D):
-                    if std[j] == 0:
-                        bl[i][j] *= 1
-                    else:
-                        bl[i][j] *= norm.pdf(
-                            parents[i].gene[j], loc=mean[j], scale=std[j])
+            # bl = np.ones((no_p, D))
+            # for i in range(0, no_p):
+            #     sf = parents[i].sf
+            #     concatenate_gene = np.array([p.gene for p in subpops[sf]])
+            #     mean = np.mean(concatenate_gene, axis=0)
+            #     std = np.std(concatenate_gene, axis=0)
+            #     for j in range(D):
+            #         bl[i][j] *= norm.pdf(
+            #             parents[i].gene[j], loc=mean[j], scale=std[j])
+            bl = np.random.normal(0.7, 0.1, size=(no_p, D))
 
             # set rmp
             # calculate max rmp between the first parents and the rest
@@ -160,10 +158,15 @@ def mfeaii_mgp(envs, config, callback=None):
         population.sort()
 
         # optimization info
-        message = {'algorithm': 'mfeaii_mp', 'rmp': round(rmp_matrix[0, 1], 1)}
+        # message = {'algorithm': 'mfeaii_mp', 'rmp': round(rmp_matrix[0, 1], 1)}
+        message = {'algorithm': 'mfeaii_mp', 'no_parent': no_par,
+                   'rmp': round(rmp_matrix[0, 1], 1)}
+        algo = 'mfea_mgp'
         results = population.get_optimization_results(t, message)
         if callback:
-            callback(results)
+            callback(results, algo)
+        # if callback:
+        #     callback(results, no_par)
 
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)

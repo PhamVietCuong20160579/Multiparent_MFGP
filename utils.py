@@ -33,19 +33,49 @@ class Saver:
         self.results = []
         self.stabe_results = []
 
-    def append(self, result, stable_result=None):
+    def append(self, result, algo, stable_result=None):
         self.results.append(result)
         # self.stabe_results.append(stable_result)
-        self.save()
+        self.save_algo(algo)
         # self.save_stabe()
+
+    def append_compare_parent(self, result, no_par, stable_result=None):
+        self.results.append(result)
+        # self.stabe_results.append(stable_result)
+        self.save_compare_parents(no_par)
+        # self.save_stabe()
+
+    def save_algo(self, algo):
+        path = os.path.join('result', self.instance,
+                            algo, '%d.pkl' % self.seed)
+        folder = os.path.join('result', self.instance, algo)
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        with open(path, 'wb') as fp:
+            pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
+
+    def save_compare_parents(self, no_par):
+        path = os.path.join('result', 'parents',
+                            '%d.pkl' % self.seed)
+        folder = os.path.join('result', 'parents')
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        with open(path, 'wb') as fp:
+            pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
     def save(self):
         path = os.path.join('result', self.instance, '%d.pkl' % self.seed)
+        folder = os.path.join('result', self.instance)
+        if not os.path.exists(folder):
+            os.mkdir(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
     def save_stabe(self):
         path = os.path.join('result', self.instance,
                             'attribute%d.fun' % self.seed)
+        folder = os.path.join('result', self.instance)
+        if not os.path.exists(folder):
+            os.mkdir(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)

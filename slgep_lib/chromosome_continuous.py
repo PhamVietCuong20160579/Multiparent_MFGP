@@ -9,6 +9,7 @@ from joblib import Parallel, delayed
 from os import cpu_count
 
 from .function_set import *
+from mtsoo.gym_tasks import GymTaskSet
 
 ChromosomeRange = namedtuple('ChromosomeRange', ('R1', 'R2', 'R3', 'R4'))
 # | --- Function Set --- | --- ADF Set --- | --- ADF Terminal Set --- | --- Terminals --- |
@@ -275,7 +276,7 @@ class Slgep_pop():
     #         self.pop[i].scalar_fitness = s_fitness[i]
     #         self.pop[i].sf = b_sf[i]
 
-    def evaluate(self, envs):
+    def evaluate(self, envs: GymTaskSet):
         no_pop = len(self.pop)
         funcs = []
         fc = []

@@ -4,7 +4,7 @@ from slgep_lib.chromosome_continuous import *
 config = load_config()
 
 
-def mfea(envs, config, callback=None):
+def mfea(envs: GymTaskSet, config, callback=None):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
@@ -102,9 +102,10 @@ def mfea(envs, config, callback=None):
 
         # optimization info
         message = {'algorithm': 'mfea', 'rmp': rmp}
+        algo = 'mfea'
         results = population.get_optimization_results(t, message)
         if callback:
-            callback(results)
+            callback(results, algo)
 
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)

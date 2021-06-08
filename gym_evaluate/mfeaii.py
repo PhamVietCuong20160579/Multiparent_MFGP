@@ -2,7 +2,7 @@ from mtsoo import *
 from slgep_lib.chromosome_continuous import *
 
 
-def mfeaii(envs, config, callback=None):
+def mfeaii(envs: GymTaskSet, config, callback=None):
     # unpacking hyper-parameters
     K = len(envs.envs)                 # number of function
     N = config['pop_size'] * K         # population size
@@ -105,9 +105,10 @@ def mfeaii(envs, config, callback=None):
 
         # optimization info
         message = {'algorithm': 'mfeaii', 'rmp': round(rmp_matrix[0, 1], 1)}
+        algo = 'mfeaii'
         results = population.get_optimization_results(t, message)
         if callback:
-            callback(results)
+            callback(results, algo)
 
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)

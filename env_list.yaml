@@ -1,19 +1,33 @@
-# cartPole_set:
+# cartPole_set_basic:
 #   names:
 #     - CartPole-v1
 #     - custom_gym:cartpole-half-gravity-v0
 
-# Cartpole_double_pole_set:
+# cartPole_set_harder:
 #   names:
-#     - LongdpoleEnv-v0
-#     - LongdpoleEnv-v1
+#     - CartPole-v1
+#     - custom_gym:cartpole-20mm-v0
 
-Atari_set_1:
+Cross_set_1:
   names:
-    - SpaceInvaders-ram-v0
-    - DemonAttack-ram-v0
+    - CartPole-v1
+    - custom_gym:doublepole-510-v0
 
-Atari_set_2:
+# Cross_set_2:
+#   names:
+#     - CartPole-v1
+#     - custom_gym:doublepole-710-v0
+
+Doublepole_set:
   names:
-    - Centipede-ram-v0
-    - DemonAttack-ram-v0
+    - custom_gym:doublepole-510-v0
+    - custom_gym:doublepole-710-v0
+# Atari_set_1:
+#   names:
+#     - SpaceInvaders-ram-v0
+#     - DemonAttack-ram-v0
+
+# Atari_set_2:
+#   names:
+#     - Centipede-ram-v0
+#     - DemonAttack-ram-v0
