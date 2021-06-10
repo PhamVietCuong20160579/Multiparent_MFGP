@@ -70,10 +70,13 @@ class DoublePole710(gym.Env):
         self.fric = 0
         self.cart_fric = 0
         # self.kinematics_integrator = 'euler'
+        self.kinematics_integrator = 'RK4'
 
-        # changing parameter
-        self.T = 0
-        self.xacc = 0
+        # # changing parameter
+        # self.T = 0
+        self.xd = 0
+        self.theta1d = 0
+        self.theta2d = 0
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
@@ -85,15 +88,15 @@ class DoublePole710(gym.Env):
             # Cart position threshold
             self.x_threshold * 2,
             # Cart velocity threshold
-            np.finfo(np.float32).max,
+            # np.finfo(np.float32).max,
             # Poll 1 angle threshold
             self.theta_threshold_radians * 2,
             # Poll 1 Angular Velocity threshold
-            np.finfo(np.float32).max,
+            # np.finfo(np.float32).max,
             # Poll 2 angle threshold
             self.theta_threshold_radians * 2,
             # Poll 2 Angular Velocity threshold
-            np.finfo(np.float32).max,
+            # np.finfo(np.float32).max,
         ], dtype=np.float32)
 
         self.action_space = spaces.Discrete(2)
@@ -148,43 +151,63 @@ class DoublePole710(gym.Env):
     def step(self, action):
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
-        x, xd, theta1, theta1d, theta2, theta2d = self.state
+
+        x, theta1, theta2 = self.state
+        xd = self.xd
+        theta1d = self.theta1d
+        theta2d = self.theta2d
         force = self.force_mag if action == 1 else -self.force_mag
 
         h2 = self.tau/2
         h6 = self.tau/6
         k1 = k2 = k3 = k4 = np.zeros((6, ))
 
-        s = np.array([x, xd, theta1, theta1d, theta2, theta2d])
-        k1[1], k1[3], k1[5] = self._cal_acc(force, s)
-        k1[0] = s[1]
-        k1[2] = s[3]
-        k1[4] = s[5]
+        if self.kinematics_integrator == 'euler':
+            s = np.array([x, xd, theta1, theta1d, theta2, theta2d])
+            xdd, theta1dd, theta2dd = self._cal_acc()
+            new_x = x + xd*self.tau
+            new_x_dot = xd + xdd*self.tau
+            new_theta_1 = theta1 + theta1d*self.tau
+            new_theta_1_dot = theta1d + theta1dd*self.tau
+            new_theta_2 = theta2 + theta2d*self.tau
+            new_theta_2_dot = theta2d + theta2dd*self.tau
+        else:
+            h = 0.01
+            h2 = h/2
+            h6 = h/6
+            k1 = k2 = k3 = k4 = np.zeros((6, ))
 
-        ns = s + h2*k1
-        k2[1], k2[3], k2[5] = self._cal_acc(force, ns)
-        k2[0] = ns[1]
-        k2[2] = ns[3]
-        k2[4] = ns[5]
+            s = np.array([x, xd, theta1, theta1d, theta2, theta2d])
+            k1[1], k1[3], k1[5] = self._cal_acc(force, s)
+            k1[0] = s[1]
+            k1[2] = s[3]
+            k1[4] = s[5]
 
-        nns = s + h2*k2
-        k3[1], k3[3], k3[5] = self._cal_acc(force, nns)
-        k3[0] = nns[1]
-        k3[2] = nns[3]
-        k3[4] = nns[5]
+            ns = s + h2*k1
+            k2[1], k2[3], k2[5] = self._cal_acc(force, ns)
+            k2[0] = ns[1]
+            k2[2] = ns[3]
+            k2[4] = ns[5]
 
-        nnns = s + self.tau*k3
-        k4[1], k4[3], k4[5] = self._cal_acc(force, nnns)
-        k4[0] = nnns[1]
-        k4[2] = nnns[3]
-        k4[4] = nnns[5]
+            nns = s + h2*k2
+            k3[1], k3[3], k3[5] = self._cal_acc(force, nns)
+            k3[0] = nns[1]
+            k3[2] = nns[3]
+            k3[4] = nns[5]
 
-        next_state = s + h6*(k1+2*(k2+k3)+k4)
+            nnns = s + h*k3
+            k4[1], k4[3], k4[5] = self._cal_acc(force, nnns)
+            k4[0] = nnns[1]
+            k4[2] = nnns[3]
+            k4[4] = nnns[5]
 
-        new_x, new_x_dot, new_theta_1, new_theta_1_dot, new_theta_2, new_theta_2_dot = next_state
+            next_state = s + h6*(k1+2*(k2+k3)+k4)
 
-        self.state = (new_x, new_x_dot, new_theta_1,
-                      new_theta_1_dot, new_theta_2, new_theta_2_dot)
+            new_x, new_x_dot, new_theta_1, new_theta_1_dot, new_theta_2, new_theta_2_dot = next_state
+        self.state = (new_x, new_theta_1, new_theta_2)
+        self.xd = new_x_dot
+        self.theta1d = new_theta_1_dot
+        self.theta2d = new_theta_2_dot
 
         done = bool(
             new_x < -self.x_threshold
@@ -215,9 +238,9 @@ class DoublePole710(gym.Env):
         return np.array(self.state), reward, done, {}
 
     def reset(self):
-        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(6,))
-        self.xacc = 0
-        self.T = 0
+        self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(3,))
+        self.xd, self.theta1d, self.theta2d = self.np_random.uniform(
+            low=-0.05, high=0.05, size=(3,))
         self.steps_beyond_done = None
         return np.array(self.state)
 
@@ -294,7 +317,7 @@ class DoublePole710(gym.Env):
         pole2.v = [(l, b), (l, t), (r, t), (r, b)]
 
         # x = self.state
-        x, x_dot, theta_1, theta_1_dot, theta_2, theta_2_dot = self.state
+        x, theta_1, theta_2 = self.state
 
         cartx = x * scale + screen_width / 2.0  # MIDDLE OF CART
         self.carttrans.set_translation(cartx, carty)

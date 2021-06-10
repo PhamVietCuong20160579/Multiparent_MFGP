@@ -110,7 +110,7 @@ def mfeaii_mgp_2(envs: GymTaskSet, config, no_parent=3, callback=None):
                     cl[i].sf = parents[0].sf
 
             # if chosen parents have different skill factor,
-            elif np.random.rand() < max_rmp:
+            else:
                 cl = population.innertask_crossover_multiparent(
                     parents, bl, rmp_matrix)
                 # ol = deepcopy(cl)
@@ -122,30 +122,6 @@ def mfeaii_mgp_2(envs: GymTaskSet, config, no_parent=3, callback=None):
                     # assign random skill factor from parents to child
                     sf_assign = [p.sf for p in parents]
                     cl[i].sf = np.random.choice(sf_assign)
-
-            # else perform crossover on random individual with the same skill factor as p1
-            else:
-                for i in range(1, no_p):
-                    parents[i] = population.find_relative(parents[0].sf)
-
-                cl = deepcopy(parents)
-                # crossover
-
-                cl = population.crossover_multiparent(parents, bl)
-                # for i in range(no_p-1):
-                #     cl[i], cl[(i+1)] = population.sbx_crossover(
-                #         parents[i], parents[(i+1)], sbxdi)
-
-                # mutate children
-                for i in range(no_p):
-                    cl[i] = population.mutate(cl[i], pmdi)
-
-                for i in range(no_p-1):
-                    cl[i], cl[(i+1)] = population.variable_swap(
-                        cl[i], cl[(i+1)], pswap)
-
-                for i in range(no_p):
-                    cl[i].sf = parents[0].sf
 
             # replace parents with children
             for i in range(no_p):

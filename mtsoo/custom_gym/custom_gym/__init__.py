@@ -3,20 +3,57 @@ from gym.envs.registration import register
 register(
     id='cartpole-half-gravity-v0',
     entry_point='custom_gym.envs:CartPoleHalfEnv',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
+)
+register(
+    id='justcartpole-v0',
+    entry_point='custom_gym.envs:JustCartpole',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
 )
 register(
     id='cartpole-14mm-v0',
     entry_point='custom_gym.envs:CartPole7',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
 )
 register(
     id='cartpole-20mm-v0',
     entry_point='custom_gym.envs:CartPole10',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
 )
 register(
     id='doublepole-710-v0',
     entry_point='custom_gym.envs:DoublePole710',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
 )
 register(
     id='doublepole-510-v0',
     entry_point='custom_gym.envs:DoublePole510',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
+)
+register(
+    id='doublepole-110-v0',
+    entry_point='custom_gym.envs:DoublePole110',
+    max_episode_steps=20000,
+    reward_threshold=475.0,
+)
+register(
+    id='doublepole-510-v1',
+    entry_point='custom_gym.envs:DoublePole510v1',
+    max_episode_steps=1000,
+)
+register(
+    id='doublepole-710-v1',
+    entry_point='custom_gym.envs:DoublePole710v1',
+    max_episode_steps=1000,
+)
+register(
+    id='doublepole-110-v1',
+    entry_point='custom_gym.envs:DoublePole110v1',
+    max_episode_steps=1000,
 )

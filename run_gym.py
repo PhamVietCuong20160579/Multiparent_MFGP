@@ -31,10 +31,10 @@ def main():
             print('[+] MFEAII - %d/%d' % (exp_id, config['repeat']))
             mfeaii(envs, config, callback)
 
-            # no_par = 3
-            # print('[+] MFEAII_MULTIPARENT - %d/%d' %
-            #       (exp_id, config['repeat']))
-            # mfeaii_mgp(envs, config, no_par, callback)
+            no_par = 3
+            print('[+] MFEAII_MULTIPARENT - %d/%d' %
+                  (exp_id, config['repeat']))
+            mfeaii_mgp(envs, config, no_par, callback)
             # mfeaii_mgp_2(envs, config, no_par, callback)
 
             # print('[+] MFEAII_MULTIPARENT second ver - %d/%d; COMPARE NUMBER OF PARENT' %

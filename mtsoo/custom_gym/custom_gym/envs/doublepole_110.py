@@ -5,7 +5,7 @@ from gym.utils import seeding
 import numpy as np
 
 
-class DoublePole510(gym.Env):
+class DoublePole110(gym.Env):
     """
     Description:
         Two pole is attached by an un-actuated joint to a cart, which moves along
@@ -62,8 +62,8 @@ class DoublePole510(gym.Env):
         self.masspole_1 = 0.1
 
         # length and mass of pole 2
-        self.length_2 = 0.25
-        self.masspole_2 = 0.05
+        self.length_2 = 0.05
+        self.masspole_2 = 0.01
 
         self.force_mag = 10.0
         self.tau = 0.02  # seconds between state updates
@@ -158,6 +158,9 @@ class DoublePole510(gym.Env):
         theta2d = self.theta2d
         force = self.force_mag if action == 1 else -self.force_mag
 
+        h2 = self.tau/2
+        h6 = self.tau/6
+        k1 = k2 = k3 = k4 = np.zeros((6, ))
         if self.kinematics_integrator == 'euler':
             s = np.array([x, xd, theta1, theta1d, theta2, theta2d])
             xdd, theta1dd, theta2dd = self._cal_acc()

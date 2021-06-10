@@ -1,3 +1,7 @@
+# test:
+#   names:
+#     - custom_gym:justcartpole-v0
+#     - CartPole-v1
 # cartPole_set_basic:
 #   names:
 #     - CartPole-v1
@@ -11,17 +15,16 @@
 Cross_set_1:
   names:
     - CartPole-v1
-    - custom_gym:doublepole-510-v0
-
+    - custom_gym:doublepole-110-v0
 # Cross_set_2:
 #   names:
 #     - CartPole-v1
-#     - custom_gym:doublepole-710-v0
+#     - custom_gym:doublepole-510-v1
 
-Doublepole_set:
+Doublepole_set_1:
   names:
-    - custom_gym:doublepole-510-v0
-    - custom_gym:doublepole-710-v0
+    - custom_gym:doublepole-510-v1
+    - custom_gym:doublepole-710-v1
 # Atari_set_1:
 #   names:
 #     - SpaceInvaders-ram-v0

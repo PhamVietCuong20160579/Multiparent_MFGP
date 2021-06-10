@@ -256,26 +256,6 @@ class Slgep_pop():
             pop.append(gene)
         return pop
 
-    # def evaluate(self, envs):
-    #     no_pop = len(self.pop)
-    #     fc = []
-    #     for i in range(no_pop):
-    #         agent = self.pop[i]
-    #         sf = agent.sf
-    #         result = envs.run_env(sf, agent)
-    #         agent.factorial_cost[sf] = result
-    #         fc.append(agent.factorial_cost)
-    #     # re-calculate s_fitness, based on current sf, not best sf, if best sf, need to re-assign sf
-    #     # s_fitness = 1 / np.min(np.argsort(np.argsort(fc, axis=0), axis=0) + 1, axis=1)
-    #     ranking = np.argsort(np.argsort(fc, axis=0), axis=0) + 1
-    #     b_sf = np.argmin(ranking, axis=1)
-    #     s_fitness = 1 / np.min(ranking, axis=1)
-
-    #     # re-assign sf to ones agent perform best
-    #     for i in range(no_pop):
-    #         self.pop[i].scalar_fitness = s_fitness[i]
-    #         self.pop[i].sf = b_sf[i]
-
     def evaluate(self, envs: GymTaskSet):
         no_pop = len(self.pop)
         funcs = []
@@ -283,7 +263,7 @@ class Slgep_pop():
         for i in range(no_pop):
             agent = self.pop[i]
             sf = agent.sf
-            result = envs.run_env(sf, agent)
+            # result = envs.run_env(sf, agent)
             funcs.append(delayed(envs.run_env)(sf, agent))
 
         results = Parallel(n_jobs=cpu_count())(funcs)
@@ -531,23 +511,22 @@ class Model:
         for d in range(D):
             # when population converted to optimum, std get smaller, if in random process create a element that too far from mean,
             # it will lead to error in np.exp(((x-mean)/std)**2/2)
-
-            if self.std[d] == 0:
-                prob *= np.ones([N])
-            else:
-                try:
-                    for j in range(N):
+            try:
+                for j in range(N):
+                    if prob[j] < 1e-100:
+                        prob[j] = 1e-100
+                    else:
                         prob[j] *= norm.pdf(subpop[j].gene[d],
                                             loc=self.mean[d], scale=self.std[d])
-                except Exception as e:
-                    print('calculate density error')
-                    print(e)
-                    print(subgene[:, d])
-                    print(self.mean[d])
-                    print(self.std[d])
-                    print(prob)
-                    print(self.sample[:, d])
-                    exit()
+            except Exception as e:
+                print('calculate density error')
+                print(e)
+                print(subgene[:, d])
+                print(self.mean[d])
+                print(self.std[d])
+                print(prob)
+                print(self.sample[:, d])
+                exit()
         return prob
 
 

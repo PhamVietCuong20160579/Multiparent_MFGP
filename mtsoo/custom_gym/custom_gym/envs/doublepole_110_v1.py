@@ -5,7 +5,7 @@ from gym.utils import seeding
 import numpy as np
 
 
-class DoublePole510(gym.Env):
+class DoublePole110v1(gym.Env):
     """
     Description:
         Two pole is attached by an un-actuated joint to a cart, which moves along
@@ -62,21 +62,23 @@ class DoublePole510(gym.Env):
         self.masspole_1 = 0.1
 
         # length and mass of pole 2
-        self.length_2 = 0.25
-        self.masspole_2 = 0.05
+        self.length_2 = 0.05
+        self.masspole_2 = 0.01
 
         self.force_mag = 10.0
-        self.tau = 0.02  # seconds between state updates
+        self.tau = 0.01  # seconds between state updates
         self.fric = 0
         self.cart_fric = 0
         # self.kinematics_integrator = 'euler'
         self.kinematics_integrator = 'RK4'
 
-        # # changing parameter
-        # self.T = 0
-        self.xd = 0
-        self.theta1d = 0
-        self.theta2d = 0
+        # changing parameter
+        self.T = 0
+        self.cart_v = 0
+        self.pole1_v = 0
+        self.pole2_v = 0
+
+        self.past_result = []
 
         # Angle at which to fail the episode
         self.theta_threshold_radians = 12 * 2 * math.pi / 360
@@ -87,16 +89,10 @@ class DoublePole510(gym.Env):
         high = np.array([
             # Cart position threshold
             self.x_threshold * 2,
-            # Cart velocity threshold
-            # np.finfo(np.float32).max,
             # Poll 1 angle threshold
             self.theta_threshold_radians * 2,
-            # Poll 1 Angular Velocity threshold
-            # np.finfo(np.float32).max,
             # Poll 2 angle threshold
             self.theta_threshold_radians * 2,
-            # Poll 2 Angular Velocity threshold
-            # np.finfo(np.float32).max,
         ], dtype=np.float32)
 
         self.action_space = spaces.Discrete(2)
@@ -149,13 +145,17 @@ class DoublePole510(gym.Env):
         return [ca, pa1, pa2]
 
     def step(self, action):
+        self.T += 1
         err_msg = "%r (%s) invalid" % (action, type(action))
         assert self.action_space.contains(action), err_msg
 
-        x, theta1, theta2 = self.state
-        xd = self.xd
-        theta1d = self.theta1d
-        theta2d = self.theta2d
+        x,  theta1, theta2 = self.state
+        xd = self.cart_v
+        theta1d = self.pole1_v
+        theta2d = self.pole2_v
+
+        self.past_result.append([x, xd, theta1, theta1d])
+
         force = self.force_mag if action == 1 else -self.force_mag
 
         if self.kinematics_integrator == 'euler':
@@ -201,10 +201,20 @@ class DoublePole510(gym.Env):
 
             new_x, new_x_dot, new_theta_1, new_theta_1_dot, new_theta_2, new_theta_2_dot = next_state
 
+        self.cart_v = new_x_dot
+        self.pole1_v = new_theta_1_dot
+        self.pole2_v = new_theta_2_dot
+
         self.state = (new_x, new_theta_1, new_theta_2)
-        self.xd = new_x_dot
-        self.theta1d = new_theta_1_dot
-        self.theta2d = new_theta_2_dot
+
+        f1 = self.T/1000
+        f2 = 0
+        if self.T >= 100:
+            vp = 0
+            for i in range(100):
+                vp += np.sum(np.abs(self.past_result[i]))
+            f2 = 0.75/vp
+            self.past_result.pop(0)
 
         done = bool(
             new_x < -self.x_threshold
@@ -216,7 +226,7 @@ class DoublePole510(gym.Env):
         )
 
         if not done:
-            reward = 1.0
+            reward = 0.1*f1 + 0.9*f2
         elif self.steps_beyond_done is None:
             # Pole just fell!
             self.steps_beyond_done = 0
@@ -236,8 +246,13 @@ class DoublePole510(gym.Env):
 
     def reset(self):
         self.state = self.np_random.uniform(low=-0.05, high=0.05, size=(3,))
-        self.xd, self.theta1d, self.theta2d = self.np_random.uniform(
+        self.T = 0
+        self.cart_v, self.pole1_v, self.pole2_v = self.np_random.uniform(
             low=-0.05, high=0.05, size=(3,))
+
+        self.past_result = [
+            [self.state[0], self.cart_v, self.state[1], self.pole1_v]]
+
         self.steps_beyond_done = None
         return np.array(self.state)
 
@@ -314,7 +329,7 @@ class DoublePole510(gym.Env):
         pole2.v = [(l, b), (l, t), (r, t), (r, b)]
 
         # x = self.state
-        x, theta_1, theta_2 = self.state
+        x,  theta_1, theta_2 = self.state
 
         cartx = x * scale + screen_width / 2.0  # MIDDLE OF CART
         self.carttrans.set_translation(cartx, carty)
