@@ -75,10 +75,6 @@ def mfeaii_mgp_2(envs: GymTaskSet, config, no_parent=3, callback=None):
             bl = np.random.normal(0.7, 0.1, size=(no_p, D))
 
             # set rmp
-            # calculate max rmp between the first parents and the rest
-            # if random < greatest rmp of the parents => perform cross-factorial crossover
-            max_rmp = np.max(
-                np.array([rmp_matrix[parents[0].sf, parents[i].sf] for i in range(1, no_p)]))
 
             # Crossover
             # Check if chosen parents have same skill factor

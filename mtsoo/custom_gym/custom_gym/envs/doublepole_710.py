@@ -58,11 +58,11 @@ class DoublePole710(gym.Env):
 
         # length and mass of pole 1
         # actually half the pole's length
-        self.length_1 = 0.5
+        self.length_1 = 1
         self.masspole_1 = 0.1
 
         # length and mass of pole 2
-        self.length_2 = 0.35
+        self.length_2 = 0.7
         self.masspole_2 = 0.05
 
         self.force_mag = 10.0

@@ -163,10 +163,10 @@ def mfeaii_mgp(envs: GymTaskSet, config, no_parent=3, callback=None):
                    'rmp': round(rmp_matrix[0, 1], 1)}
         algo = 'mfea_mgp'
         results = population.get_optimization_results(t, message)
-        if callback:
-            callback(results, algo)
         # if callback:
-        #     callback(results, no_par)
+        #     callback(results, algo)
+        if callback:
+            callback(results, no_par)
 
         desc = 'gen:{} fitness:{} message:{}'.format(t, ' '.join(
             '{:0.6f}'.format(res.fun) for res in results), message)

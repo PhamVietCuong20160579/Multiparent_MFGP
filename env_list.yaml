@@ -6,25 +6,32 @@
 #   names:
 #     - CartPole-v1
 #     - custom_gym:cartpole-half-gravity-v0
-
-# cartPole_set_harder:
-#   names:
-#     - CartPole-v1
-#     - custom_gym:cartpole-20mm-v0
-
-Cross_set_1:
+cartPole_set_harder:
   names:
     - CartPole-v1
-    - custom_gym:doublepole-110-v0
+    - custom_gym:cartpole-20mm-v0
+
+# Cross_set_1:
+#   names:
+#     - MountainCar-v0
+#     - CartPole-v1
 # Cross_set_2:
 #   names:
 #     - CartPole-v1
-#     - custom_gym:doublepole-510-v1
+#     - custom_gym:doublepole-510-v0
 
-Doublepole_set_1:
+Cross_set_3:
   names:
-    - custom_gym:doublepole-510-v1
-    - custom_gym:doublepole-710-v1
+    - CartPole-v1
+    - custom_gym:doublepole-710-v0
+# Doublepole_set_1:
+#   names:
+#     - custom_gym:doublepole-510-v1
+#     - custom_gym:doublepole-710-v1
+# Doublepole_set_2:
+#   names:
+#     - custom_gym:doublepole-510-v1
+#     - custom_gym:doublepole-510-v1
 # Atari_set_1:
 #   names:
 #     - SpaceInvaders-ram-v0

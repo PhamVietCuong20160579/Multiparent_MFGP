@@ -1,0 +1,16 @@
+dimension: 50
+h_adf: 3
+h_main: 10
+max_arity: 2
+mutation_rate: 0.1
+names:
+- CartPole-v1
+- custom_gym:cartpole-20mm-v0
+num_iter: 100
+num_par: 3
+pmdi: 10
+pop_size: 10
+pswap: 0.5
+repeat: 20
+rmp: 0.2
+sbxdi: 10

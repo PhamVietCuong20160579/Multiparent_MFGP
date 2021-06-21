@@ -58,11 +58,11 @@ class DoublePole710v1(gym.Env):
 
         # length and mass of pole 1
         # actually half the pole's length
-        self.length_1 = 0.5
+        self.length_1 = 1
         self.masspole_1 = 0.1
 
         # length and mass of pole 2
-        self.length_2 = 0.35
+        self.length_2 = 0.7
         self.masspole_2 = 0.05
 
         self.force_mag = 10.0
@@ -210,7 +210,7 @@ class DoublePole710v1(gym.Env):
         f2 = 0
         if self.T >= 100:
             vp = 0
-            for i in range(self.T-100, self.T):
+            for i in range(100):
                 vp += np.sum(np.abs(self.past_result[i]))
             f2 = 0.75/vp
             self.past_result.pop(0)

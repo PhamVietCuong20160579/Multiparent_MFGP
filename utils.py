@@ -20,16 +20,20 @@ class Saver:
         # Create result folder
         folder = 'result'
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         folder = 'result/%s' % instance
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         # Save configuration
         path = os.path.join(folder, 'config.yaml')
         _config = deepcopy(config)
 
         with open(path, 'w') as fp:
             yaml.dump(_config, fp)
+        self.results = []
+        self.stabe_results = []
+
+    def reset(self):
         self.results = []
         self.stabe_results = []
 
@@ -50,16 +54,17 @@ class Saver:
                             algo, '%d.pkl' % self.seed)
         folder = os.path.join('result', self.instance, algo)
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
     def save_compare_parents(self, no_par):
-        path = os.path.join('result', 'parents',
+        path = os.path.join('result', 'parents', self.instance, '%d' % no_par,
                             '%d.pkl' % self.seed)
-        folder = os.path.join('result', 'parents')
+        folder = os.path.join('result', 'parents',
+                              self.instance, '%d' % no_par)
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -67,7 +72,7 @@ class Saver:
         path = os.path.join('result', self.instance, '%d.pkl' % self.seed)
         folder = os.path.join('result', self.instance)
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
 
@@ -76,6 +81,6 @@ class Saver:
                             'attribute%d.fun' % self.seed)
         folder = os.path.join('result', self.instance)
         if not os.path.exists(folder):
-            os.mkdir(folder)
+            os.makedirs(folder)
         with open(path, 'wb') as fp:
             pickle.dump(self.results, fp, protocol=pickle.HIGHEST_PROTOCOL)
